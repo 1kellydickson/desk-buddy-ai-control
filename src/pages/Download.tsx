@@ -1,13 +1,15 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Monitor, Apple, Terminal, Check, Download as DownloadIcon } from "lucide-react";
+import { Monitor, Apple, Terminal, Check, Download as DownloadIcon, Globe } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from "@/components/ui/drawer";
 import { toast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const Download = () => {
   const [isSetupOpen, setIsSetupOpen] = useState(false);
@@ -15,6 +17,7 @@ const Download = () => {
   const [loading, setLoading] = useState(false);
   const [setupStep, setSetupStep] = useState(1);
   const [setupProgress, setSetupProgress] = useState(0);
+  const [showLocalSetup, setShowLocalSetup] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
 
   const handleDownload = (type) => {
@@ -85,11 +88,40 @@ const Download = () => {
             </div>
             <div className="space-y-1">
               <Label htmlFor="language">Preferred Language</Label>
-              <Input id="language" placeholder="English" />
+              <Select defaultValue="english">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="spanish">Spanish</SelectItem>
+                  <SelectItem value="french">French</SelectItem>
+                  <SelectItem value="german">German</SelectItem>
+                  <SelectItem value="chinese">Chinese</SelectItem>
+                  <SelectItem value="japanese">Japanese</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label htmlFor="useCase">Primary Use Case</Label>
-              <Input id="useCase" placeholder="e.g., File Management, Reminders, etc." />
+              <RadioGroup defaultValue="productivity">
+                <div className="flex items-center space-x-2 my-2">
+                  <RadioGroupItem value="productivity" id="productivity" />
+                  <Label htmlFor="productivity">Productivity & Task Management</Label>
+                </div>
+                <div className="flex items-center space-x-2 my-2">
+                  <RadioGroupItem value="files" id="files" />
+                  <Label htmlFor="files">File Management & Organization</Label>
+                </div>
+                <div className="flex items-center space-x-2 my-2">
+                  <RadioGroupItem value="reminders" id="reminders" />
+                  <Label htmlFor="reminders">Reminders & Calendar</Label>
+                </div>
+                <div className="flex items-center space-x-2 my-2">
+                  <RadioGroupItem value="all" id="all" />
+                  <Label htmlFor="all">All Features</Label>
+                </div>
+              </RadioGroup>
             </div>
           </div>
           <Button onClick={() => setSetupStep(3)} className="w-full mt-4">
@@ -126,6 +158,84 @@ const Download = () => {
     </div>
   );
 
+  const LocalSetupContent = () => (
+    <div className="space-y-6 max-w-3xl mx-auto py-8">
+      <h2 className="text-2xl font-bold">Local Setup Instructions</h2>
+      
+      <div className="space-y-6">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2">System Requirements</h3>
+          <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+            <li>Node.js v16 or higher</li>
+            <li>npm v7 or higher (or yarn)</li>
+            <li>2GB of RAM minimum</li>
+            <li>500MB disk space</li>
+          </ul>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Step 1: Download the Source Code</h3>
+          <p className="text-gray-600 dark:text-gray-400">Clone the repository from GitHub:</p>
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md font-mono text-sm overflow-x-auto">
+            git clone https://github.com/deskmate/deskmate-ai.git
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Step 2: Install Dependencies</h3>
+          <p className="text-gray-600 dark:text-gray-400">Navigate to the project directory and install dependencies:</p>
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md font-mono text-sm overflow-x-auto">
+            cd deskmate-ai<br/>
+            npm install
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Step 3: Configure Environment</h3>
+          <p className="text-gray-600 dark:text-gray-400">Create a .env file from the template:</p>
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md font-mono text-sm overflow-x-auto">
+            cp .env.example .env<br/>
+            # Edit .env with your preferred text editor to set API keys
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Step 4: Run Development Server</h3>
+          <p className="text-gray-600 dark:text-gray-400">Start the development server:</p>
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md font-mono text-sm overflow-x-auto">
+            npm run dev
+          </div>
+          <p className="text-gray-600 dark:text-gray-400">The application should now be running on <span className="font-mono">http://localhost:3000</span></p>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Step 5: Build for Production</h3>
+          <p className="text-gray-600 dark:text-gray-400">When ready for production use:</p>
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md font-mono text-sm overflow-x-auto">
+            npm run build<br/>
+            npm run start
+          </div>
+        </div>
+        
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Troubleshooting Common Issues</h3>
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900 rounded-lg p-4">
+            <h4 className="font-medium mb-2">API Connection Issues</h4>
+            <p className="text-sm">If you encounter issues connecting to DeskMate services, ensure your API keys are correctly configured in the .env file.</p>
+          </div>
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900 rounded-lg p-4">
+            <h4 className="font-medium mb-2">Voice Recognition Not Working</h4>
+            <p className="text-sm">Make sure your browser has microphone permissions enabled and you're using a compatible browser (Chrome, Edge, or Firefox recommended).</p>
+          </div>
+        </div>
+        
+        <Button onClick={() => setShowLocalSetup(false)} className="w-full">
+          Close Setup Guide
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -138,6 +248,11 @@ const Download = () => {
             <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
               Get the desktop assistant that transforms how you interact with your computer.
             </p>
+            <div className="flex flex-wrap gap-4 justify-center mt-2">
+              <Button variant="outline" onClick={() => setShowLocalSetup(true)}>
+                <Globe className="mr-2 h-4 w-4" /> View Local Setup Guide
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -237,6 +352,31 @@ const Download = () => {
               <DialogDescription>Follow the steps to setup your assistant</DialogDescription>
             </DialogHeader>
             <SetupContent />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Local Setup Guide Modal/Drawer */}
+      {isMobile ? (
+        <Drawer open={showLocalSetup} onOpenChange={setShowLocalSetup}>
+          <DrawerContent className="h-[90%]">
+            <DrawerHeader>
+              <DrawerTitle>Local Setup Guide</DrawerTitle>
+              <DrawerDescription>How to run DeskMate AI locally</DrawerDescription>
+            </DrawerHeader>
+            <div className="p-4 overflow-y-auto">
+              <LocalSetupContent />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={showLocalSetup} onOpenChange={setShowLocalSetup}>
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Local Setup Guide</DialogTitle>
+              <DialogDescription>How to run DeskMate AI locally</DialogDescription>
+            </DialogHeader>
+            <LocalSetupContent />
           </DialogContent>
         </Dialog>
       )}
