@@ -1,6 +1,5 @@
-
 import { Button } from "@/components/ui/button";
-import { Windows, Apple, Linux, Check } from "lucide-react";
+import { Windows, Apple, Terminal, Check } from "lucide-react";
 
 const Download = () => {
   return (
@@ -51,7 +50,7 @@ const Download = () => {
               format="DMG"
             />
             <DownloadCard
-              icon={<Linux className="h-12 w-12 text-primary" />}
+              icon={<Terminal className="h-12 w-12 text-primary" />}
               title="Linux"
               version="v1.2.0"
               size="128 MB"
