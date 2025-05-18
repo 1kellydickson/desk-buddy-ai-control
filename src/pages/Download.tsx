@@ -1,8 +1,131 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Monitor, Apple, Terminal, Check } from "lucide-react";
+import { Monitor, Apple, Terminal, Check, Download as DownloadIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from "@/components/ui/drawer";
+import { toast } from "@/hooks/use-toast";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const Download = () => {
+  const [isSetupOpen, setIsSetupOpen] = useState(false);
+  const [downloadType, setDownloadType] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [setupStep, setSetupStep] = useState(1);
+  const [setupProgress, setSetupProgress] = useState(0);
+  const isMobile = useMediaQuery("(max-width: 640px)");
+
+  const handleDownload = (type) => {
+    setDownloadType(type);
+    setSetupStep(1);
+    setSetupProgress(0);
+    setIsSetupOpen(true);
+    
+    // Simulate starting the download
+    toast({
+      title: "Download started",
+      description: `Starting download for ${type}...`,
+    });
+  };
+
+  const simulateSetup = () => {
+    setLoading(true);
+    setSetupProgress(0);
+    
+    // Simulate setup progress
+    const interval = setInterval(() => {
+      setSetupProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setLoading(false);
+          setSetupStep(prev => prev + 1);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 500);
+  };
+
+  const SetupContent = () => (
+    <div className="space-y-6">
+      {setupStep === 1 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Download and Installation</h3>
+          <p className="text-sm text-gray-500">
+            We're downloading DeskMate AI for {downloadType}. This may take a few minutes depending on your internet connection.
+          </p>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div className="bg-primary h-2.5 rounded-full" style={{ width: `${setupProgress}%` }}></div>
+          </div>
+          <p className="text-xs text-gray-500 text-right">{setupProgress}% complete</p>
+          
+          {setupProgress === 100 && (
+            <Button onClick={() => setSetupStep(2)} className="w-full mt-4">
+              Continue Setup
+            </Button>
+          )}
+          
+          {setupProgress < 100 && (
+            <Button onClick={simulateSetup} disabled={loading} className="w-full mt-4">
+              {loading ? "Downloading..." : "Start Download"}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {setupStep === 2 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Configure DeskMate</h3>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="name">Your Name</Label>
+              <Input id="name" placeholder="Enter your name" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="language">Preferred Language</Label>
+              <Input id="language" placeholder="English" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="useCase">Primary Use Case</Label>
+              <Input id="useCase" placeholder="e.g., File Management, Reminders, etc." />
+            </div>
+          </div>
+          <Button onClick={() => setSetupStep(3)} className="w-full mt-4">
+            Continue
+          </Button>
+        </div>
+      )}
+
+      {setupStep === 3 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Setup Complete!</h3>
+          <p className="text-sm text-gray-500">
+            Your DeskMate AI assistant has been successfully installed and configured. You can now start using it to manage your tasks.
+          </p>
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900 rounded-lg">
+            <h4 className="font-medium flex items-center gap-2 text-green-700 dark:text-green-300">
+              <Check className="h-5 w-5" /> Ready to use
+            </h4>
+            <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+              Say "Hello DeskMate" or press Alt+Space to get started.
+            </p>
+          </div>
+          <Button onClick={() => {
+            setIsSetupOpen(false);
+            toast({
+              title: "Setup completed successfully",
+              description: "You can now start using DeskMate AI!",
+            });
+          }} className="w-full mt-4">
+            Get Started with DeskMate
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -42,6 +165,7 @@ const Download = () => {
               version="v1.2.0"
               size="145 MB"
               format="EXE"
+              onDownload={() => handleDownload("Windows")}
             />
             <DownloadCard
               icon={<Apple className="h-12 w-12 text-primary" />}
@@ -49,6 +173,7 @@ const Download = () => {
               version="v1.2.0"
               size="132 MB"
               format="DMG"
+              onDownload={() => handleDownload("macOS")}
             />
             <DownloadCard
               icon={<Terminal className="h-12 w-12 text-primary" />}
@@ -56,6 +181,7 @@ const Download = () => {
               version="v1.2.0"
               size="128 MB"
               format="DEB / AppImage"
+              onDownload={() => handleDownload("Linux")}
             />
           </div>
         </div>
@@ -89,6 +215,31 @@ const Download = () => {
           </div>
         </div>
       </section>
+
+      {/* Setup Modal/Drawer - Responsive UI */}
+      {isMobile ? (
+        <Drawer open={isSetupOpen} onOpenChange={setIsSetupOpen}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>DeskMate AI Setup</DrawerTitle>
+              <DrawerDescription>Follow the steps to setup your assistant</DrawerDescription>
+            </DrawerHeader>
+            <div className="p-4">
+              <SetupContent />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>DeskMate AI Setup</DialogTitle>
+              <DialogDescription>Follow the steps to setup your assistant</DialogDescription>
+            </DialogHeader>
+            <SetupContent />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
@@ -109,7 +260,7 @@ const RequirementCard = ({ title, items }) => {
   );
 };
 
-const DownloadCard = ({ icon, title, version, size, format }) => {
+const DownloadCard = ({ icon, title, version, size, format, onDownload }) => {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border flex flex-col items-center text-center">
       <div className="mb-4">{icon}</div>
@@ -118,7 +269,9 @@ const DownloadCard = ({ icon, title, version, size, format }) => {
         {version} • {size}
       </p>
       <p className="text-xs bg-muted rounded-full px-2 py-1 mb-6">{format}</p>
-      <Button className="w-full">Download</Button>
+      <Button className="w-full" onClick={onDownload}>
+        <DownloadIcon className="mr-2 h-4 w-4" /> Download
+      </Button>
     </div>
   );
 };
