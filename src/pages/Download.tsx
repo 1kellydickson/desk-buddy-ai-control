@@ -1,5 +1,6 @@
+
 import { Button } from "@/components/ui/button";
-import { Windows, Apple, Terminal, Check } from "lucide-react";
+import { Monitor, Apple, Terminal, Check } from "lucide-react";
 
 const Download = () => {
   return (
@@ -36,7 +37,7 @@ const Download = () => {
           <h2 className="text-2xl font-bold text-center mb-12">Choose your version</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <DownloadCard
-              icon={<Windows className="h-12 w-12 text-primary" />}
+              icon={<Monitor className="h-12 w-12 text-primary" />}
               title="Windows"
               version="v1.2.0"
               size="145 MB"
