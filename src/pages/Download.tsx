@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Monitor, Apple, Terminal, Check, Download as DownloadIcon, Globe } from "lucide-react";
+import { Monitor, Apple, Terminal, Check, Download as DownloadIcon, Globe, Settings, Folder, File } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,13 @@ import { toast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const Download = () => {
   const [isSetupOpen, setIsSetupOpen] = useState(false);
@@ -18,12 +25,34 @@ const Download = () => {
   const [setupStep, setSetupStep] = useState(1);
   const [setupProgress, setSetupProgress] = useState(0);
   const [showLocalSetup, setShowLocalSetup] = useState(false);
+  const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
+  const [setupComplete, setSetupComplete] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
+
+  const formSchema = z.object({
+    name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+    language: z.string().optional(),
+    useCase: z.string(),
+    allowTelemetry: z.boolean().default(true),
+    autoStart: z.boolean().default(true),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      language: "english",
+      useCase: "productivity",
+      allowTelemetry: true,
+      autoStart: true,
+    },
+  });
 
   const handleDownload = (type) => {
     setDownloadType(type);
     setSetupStep(1);
     setSetupProgress(0);
+    setSetupComplete(false);
     setIsSetupOpen(true);
     
     // Simulate starting the download
@@ -43,12 +72,31 @@ const Download = () => {
         if (prev >= 100) {
           clearInterval(interval);
           setLoading(false);
-          setSetupStep(prev => prev + 1);
           return 100;
         }
         return prev + 10;
       });
     }, 500);
+  };
+
+  useEffect(() => {
+    if (setupProgress === 100 && loading) {
+      setLoading(false);
+    }
+  }, [setupProgress, loading]);
+
+  const onSubmit = (data) => {
+    console.log("Form data:", data);
+    setSetupStep(3); // Move to final step
+  };
+
+  const launchDemo = () => {
+    setSetupComplete(true);
+    setIsSetupOpen(false);
+    toast({
+      title: "DeskMate AI Initialized",
+      description: "Your desktop assistant is now ready to use!",
+    });
   };
 
   const SetupContent = () => (
@@ -59,10 +107,14 @@ const Download = () => {
           <p className="text-sm text-gray-500">
             We're downloading DeskMate AI for {downloadType}. This may take a few minutes depending on your internet connection.
           </p>
-          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-            <div className="bg-primary h-2.5 rounded-full" style={{ width: `${setupProgress}%` }}></div>
+          
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>Downloading...</span>
+              <span>{setupProgress}%</span>
+            </div>
+            <Progress value={setupProgress} className="h-2" />
           </div>
-          <p className="text-xs text-gray-500 text-right">{setupProgress}% complete</p>
           
           {setupProgress === 100 && (
             <Button onClick={() => setSetupStep(2)} className="w-full mt-4">
@@ -75,66 +127,186 @@ const Download = () => {
               {loading ? "Downloading..." : "Start Download"}
             </Button>
           )}
+
+          <Collapsible open={isCollapsibleOpen} onOpenChange={setIsCollapsibleOpen} className="border rounded-md p-2">
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-2 text-sm">
+              <span>Download details</span>
+              <span className="text-xs text-gray-500">{isCollapsibleOpen ? "Hide" : "Show"}</span>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="p-2 space-y-2 text-xs text-gray-500">
+              <div className="flex justify-between">
+                <span>Version:</span>
+                <span>1.2.0</span>
+              </div>
+              <div className="flex justify-between">
+                <span>File size:</span>
+                <span>{downloadType === "Windows" ? "145 MB" : downloadType === "macOS" ? "132 MB" : "128 MB"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>File name:</span>
+                <span>deskmate-ai-{downloadType.toLowerCase()}-v1.2.0{downloadType === "Windows" ? ".exe" : downloadType === "macOS" ? ".dmg" : ".deb"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Security check:</span>
+                <span className="flex items-center text-green-500"><Check className="h-3 w-3 mr-1" /> Verified</span>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       )}
 
       {setupStep === 2 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Configure DeskMate</h3>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="name">Your Name</Label>
-              <Input id="name" placeholder="Enter your name" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="language">Preferred Language</Label>
-              <Select defaultValue="english">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="english">English</SelectItem>
-                  <SelectItem value="spanish">Spanish</SelectItem>
-                  <SelectItem value="french">French</SelectItem>
-                  <SelectItem value="german">German</SelectItem>
-                  <SelectItem value="chinese">Chinese</SelectItem>
-                  <SelectItem value="japanese">Japanese</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="useCase">Primary Use Case</Label>
-              <RadioGroup defaultValue="productivity">
-                <div className="flex items-center space-x-2 my-2">
-                  <RadioGroupItem value="productivity" id="productivity" />
-                  <Label htmlFor="productivity">Productivity & Task Management</Label>
-                </div>
-                <div className="flex items-center space-x-2 my-2">
-                  <RadioGroupItem value="files" id="files" />
-                  <Label htmlFor="files">File Management & Organization</Label>
-                </div>
-                <div className="flex items-center space-x-2 my-2">
-                  <RadioGroupItem value="reminders" id="reminders" />
-                  <Label htmlFor="reminders">Reminders & Calendar</Label>
-                </div>
-                <div className="flex items-center space-x-2 my-2">
-                  <RadioGroupItem value="all" id="all" />
-                  <Label htmlFor="all">All Features</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          </div>
-          <Button onClick={() => setSetupStep(3)} className="w-full mt-4">
-            Continue
-          </Button>
-        </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="language"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preferred Language (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="english">English</SelectItem>
+                      <SelectItem value="spanish">Spanish</SelectItem>
+                      <SelectItem value="french">French</SelectItem>
+                      <SelectItem value="german">German</SelectItem>
+                      <SelectItem value="chinese">Chinese</SelectItem>
+                      <SelectItem value="japanese">Japanese</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    DeskMate will use this language for communication
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="useCase"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Primary Use Case</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1"
+                    >
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="productivity" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Productivity & Task Management
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="files" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          File Management & Organization
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="reminders" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Reminders & Calendar
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="all" />
+                        </FormControl>
+                        <FormLabel className="font-normal">All Features</FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="allowTelemetry"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Usage Analytics
+                    </FormLabel>
+                    <FormDescription>
+                      Allow DeskMate to collect anonymous usage data to help improve the product
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="autoStart"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Start at Login
+                    </FormLabel>
+                    <FormDescription>
+                      Launch DeskMate automatically when your computer starts
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" className="w-full mt-6">
+              Complete Setup
+            </Button>
+          </form>
+        </Form>
       )}
 
       {setupStep === 3 && (
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Setup Complete!</h3>
           <p className="text-sm text-gray-500">
-            Your DeskMate AI assistant has been successfully installed and configured. You can now start using it to manage your tasks.
+            Your DeskMate AI assistant has been successfully installed and configured. You can now start using it to manage your desktop tasks.
           </p>
           <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900 rounded-lg">
             <h4 className="font-medium flex items-center gap-2 text-green-700 dark:text-green-300">
@@ -144,15 +316,18 @@ const Download = () => {
               Say "Hello DeskMate" or press Alt+Space to get started.
             </p>
           </div>
-          <Button onClick={() => {
-            setIsSetupOpen(false);
-            toast({
-              title: "Setup completed successfully",
-              description: "You can now start using DeskMate AI!",
-            });
-          }} className="w-full mt-4">
-            Get Started with DeskMate
-          </Button>
+
+          {setupComplete ? (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+              <p className="text-sm text-blue-600 dark:text-blue-400">
+                DeskMate is now running in the background. Look for the icon in your system tray.
+              </p>
+            </div>
+          ) : (
+            <Button onClick={launchDemo} className="w-full mt-4">
+              Launch DeskMate
+            </Button>
+          )}
         </div>
       )}
     </div>
@@ -214,6 +389,41 @@ const Download = () => {
           <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md font-mono text-sm overflow-x-auto">
             npm run build<br/>
             npm run start
+          </div>
+        </div>
+        
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Step 6: Activate Desktop Features</h3>
+          <p className="text-gray-600 dark:text-gray-400">For full desktop integration, run:</p>
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md font-mono text-sm overflow-x-auto">
+            npm run desktop-setup
+          </div>
+          <p className="text-gray-600 dark:text-gray-400">This will install system tray integration and enable keyboard shortcuts.</p>
+        </div>
+
+        <div className="space-y-3 mt-8">
+          <h3 className="text-lg font-semibold">Available Desktop Commands</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DesktopCommandCard 
+              command="Alt+Space" 
+              description="Open DeskMate assistant" 
+              icon={<Settings className="h-5 w-5 text-blue-600" />}
+            />
+            <DesktopCommandCard 
+              command="Alt+T" 
+              description="Create new task" 
+              icon={<File className="h-5 w-5 text-green-600" />}
+            />
+            <DesktopCommandCard 
+              command="Alt+F" 
+              description="Quick file search" 
+              icon={<Folder className="h-5 w-5 text-amber-600" />}
+            />
+            <DesktopCommandCard 
+              command="Alt+S" 
+              description="Take screenshot" 
+              icon={<Monitor className="h-5 w-5 text-purple-600" />}
+            />
           </div>
         </div>
         
@@ -302,6 +512,45 @@ const Download = () => {
         </div>
       </section>
 
+      {/* Key Features */}
+      <section className="py-16 px-4 md:px-6">
+        <div className="container">
+          <h2 className="text-2xl font-bold text-center mb-12">Desktop Feature Highlights</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <FeatureCard
+              title="Voice Commands"
+              description="Control your computer with natural voice commands and receive spoken responses."
+              icon={<Settings className="h-10 w-10 text-primary" />}
+            />
+            <FeatureCard
+              title="Smart File Management"
+              description="Find, organize, and manipulate files with natural language instructions."
+              icon={<Folder className="h-10 w-10 text-primary" />}
+            />
+            <FeatureCard
+              title="Task Automation"
+              description="Create custom workflows and automate repetitive tasks with simple commands."
+              icon={<Check className="h-10 w-10 text-primary" />}
+            />
+            <FeatureCard
+              title="Calendar Integration"
+              description="Manage your schedule, set reminders, and get meeting notifications."
+              icon={<File className="h-10 w-10 text-primary" />}
+            />
+            <FeatureCard
+              title="Screen Capture & Analysis"
+              description="Take screenshots and extract text or analyze content automatically."
+              icon={<Monitor className="h-10 w-10 text-primary" />}
+            />
+            <FeatureCard
+              title="System Monitoring"
+              description="Track system performance, battery life, and get optimization suggestions."
+              icon={<Settings className="h-10 w-10 text-primary" />}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Installation Instructions */}
       <section className="py-16 px-4 md:px-6">
         <div className="container">
@@ -380,6 +629,30 @@ const Download = () => {
           </DialogContent>
         </Dialog>
       )}
+    </div>
+  );
+};
+
+// Component for desktop command cards in local setup instructions
+const DesktopCommandCard = ({ command, description, icon }) => {
+  return (
+    <div className="flex items-start p-3 border rounded-lg bg-white dark:bg-gray-800">
+      {icon}
+      <div className="ml-3">
+        <p className="font-mono text-sm font-bold">{command}</p>
+        <p className="text-xs text-gray-600 dark:text-gray-400">{description}</p>
+      </div>
+    </div>
+  );
+};
+
+// Component for feature cards
+const FeatureCard = ({ title, description, icon }) => {
+  return (
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border flex flex-col items-center text-center">
+      <div className="mb-4 bg-primary/10 p-3 rounded-full">{icon}</div>
+      <h3 className="text-xl font-semibold mb-2">{title}</h3>
+      <p className="text-gray-500 dark:text-gray-400">{description}</p>
     </div>
   );
 };
