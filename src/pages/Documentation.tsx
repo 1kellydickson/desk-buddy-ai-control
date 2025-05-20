@@ -190,7 +190,7 @@ function customAction(parameter) {
                       Extend functionality with plugins from our marketplace or create your own:
                     </p>
                     <ol className="space-y-2 list-decimal list-inside text-gray-700 dark:text-gray-300 mb-6">
-                      <li>Go to Settings > Plugins</li>
+                      <li>Go to Settings &gt; Plugins</li>
                       <li>Browse available plugins or click "Install from file"</li>
                       <li>Activate your installed plugins</li>
                     </ol>
