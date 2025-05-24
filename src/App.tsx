@@ -12,6 +12,7 @@ import Documentation from "./pages/Documentation";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 import Auth from "./pages/Auth";
+import DesktopApp from "./pages/DesktopApp";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
